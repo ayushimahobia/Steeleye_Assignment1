@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Data
 import mockData from "../assets/data.json";
@@ -20,10 +20,39 @@ const Dashboard = () => {
   const [selectedOrderDetails, setSelectedOrderDetails] = useState({});
   const [selectedOrderTimeStamps, setSelectedOrderTimeStamps] = useState({});
 
+  const newData = mockData.results;
+  const timeStampsMaps = {};
+  const [filteredData , setfilteredData] = useState(newData);
+
+  timestamps.results.forEach((result) =>{
+    const id = result["&id"];
+    timeStampsMaps[id] = result.timestamps;
+  });
+
+  newData.forEach((data)=>{
+    const id = data["&id"];
+    if(timeStampsMaps[id]){
+      data["timestamps"] = timeStampsMaps[id];
+    }
+  });
+
+  useEffect(()=>{
+    if(!searchText){
+      setfilteredData(newData);
+    }
+    else{
+      const filtered = newData.filter((data) =>{
+        const id = data["&id"];
+        return id.includes(searchText);
+      });
+      setfilteredData(filtered);
+    }
+  },[searchText,newData]);
+
   return (
     <div>
       <div className={styles.header}>
-        <HeaderTitle primaryTitle="Orders" secondaryTitle="5 orders" />
+        <HeaderTitle primaryTitle="Orders" secondaryTitle= {`${filteredData.length} orders`} />
         <div className={styles.actionBox}>
           <Search
             value={searchText}
@@ -47,7 +76,12 @@ const Dashboard = () => {
             title="Selected Order Timestamps"
           />
         </div>
-        <List rows={mockData.results} />
+        <List 
+        rows = {filteredData}
+        currency = {currency}
+        setSelectedOrderTimeStamps ={setSelectedOrderTimeStamps}  
+        setSelectedOrderDetails={setSelectedOrderDetails}   
+        />
       </div>
     </div>
   );
